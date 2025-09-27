@@ -14,7 +14,7 @@ module.exports = {
     static: path.resolve(__dirname, 'public'),
   },
   output: {
-    publicPath: 'http://localhost:3003/',
+    publicPath: 'auto',
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js'],
