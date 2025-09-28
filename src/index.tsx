@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ReportDashboard from './ReportDashboard';
 
 const container = document.getElementById('root');
@@ -9,7 +9,7 @@ if (container) {
   root.render(
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<div>Welcome to Reporting App</div>} />
+        <Route path="/" element={<Navigate to="/reporting/dashboard" />} />
         <Route path="/reporting/dashboard" element={<ReportDashboard />} />
       </Routes>
     </BrowserRouter>
