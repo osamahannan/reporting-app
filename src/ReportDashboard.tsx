@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, PieLabelRenderProps } from 'recharts';
 import './styles.css';
 
 interface DashboardStats {
@@ -17,6 +18,19 @@ interface BookingData {
   revenue: number;
 }
 
+interface BookingTrendData {
+  date: string;
+  bookings: number;
+  revenue: number;
+}
+
+interface FacilityUtilizationData {
+  name: string;
+  value: number;
+  color: string;
+  [key: string]: any; // Add index signature for Recharts compatibility
+}
+
 const ReportDashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats>({
     totalBookings: 0,
@@ -25,8 +39,34 @@ const ReportDashboard: React.FC = () => {
     utilization: 0
   });
   const [recentBookings, setRecentBookings] = useState<BookingData[]>([]);
+  const [bookingTrends, setBookingTrends] = useState<BookingTrendData[]>([]);
+  const [facilityUtilization, setFacilityUtilization] = useState<FacilityUtilizationData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState('7d');
+
+  // Function to generate mock data based on selected period
+  const generateTrendData = (period: string) => {
+    const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
+    const data = [];
+    
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      // Generate realistic booking and revenue data
+      const baseBookings = 15 + Math.random() * 20;
+      const baseRevenue = baseBookings * (80 + Math.random() * 40);
+      
+      data.push({
+        date: dateStr,
+        bookings: Math.round(baseBookings),
+        revenue: Math.round(baseRevenue)
+      });
+    }
+    
+    return data;
+  };
 
   useEffect(() => {
     setTimeout(() => {
@@ -78,6 +118,18 @@ const ReportDashboard: React.FC = () => {
           status: 'active',
           revenue: 300
         }
+      ]);
+
+      // Generate booking trends data based on selected period
+      setBookingTrends(generateTrendData(selectedPeriod));
+
+      // Mock facility utilization data
+      setFacilityUtilization([
+        { name: 'Conference Room A', value: 35, color: '#667eea' },
+        { name: 'Training Room', value: 25, color: '#764ba2' },
+        { name: 'Boardroom', value: 20, color: '#f093fb' },
+        { name: 'Meeting Room 1', value: 12, color: '#f5576c' },
+        { name: 'Auditorium', value: 8, color: '#4facfe' }
       ]);
 
       setIsLoading(false);
@@ -170,14 +222,70 @@ const ReportDashboard: React.FC = () => {
                 </button>
               </div>
             </div>
-            <div className="mock-chart">
-              <div className="chart-placeholder">
-                <div className="chart-placeholder-icon">📈</div>
-                <div className="chart-placeholder-text">Booking Trends Chart</div>
-                <div style={{ fontSize: '0.8rem', marginTop: '0.5rem', opacity: 0.7 }}>
-                  (Chart visualization would be implemented with a library like Chart.js or Recharts)
-                </div>
-              </div>
+            <div className="chart-container-inner">
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={bookingTrends}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis 
+                    dataKey="date" 
+                    stroke="#6b7280"
+                    fontSize={12}
+                    tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  />
+                  <YAxis 
+                    yAxisId="bookings"
+                    orientation="left"
+                    stroke="#6b7280"
+                    fontSize={12}
+                  />
+                  <YAxis 
+                    yAxisId="revenue"
+                    orientation="right"
+                    stroke="#6b7280"
+                    fontSize={12}
+                    tickFormatter={(value) => `$${value}`}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
+                    }}
+                    labelFormatter={(value) => new Date(value).toLocaleDateString('en-US', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                    formatter={(value: any, name: any) => [
+                      name === 'bookings' ? value : `$${value}`,
+                      name === 'bookings' ? 'Bookings' : 'Revenue'
+                    ]}
+                  />
+                  <Legend />
+                  <Line 
+                    yAxisId="bookings"
+                    type="monotone" 
+                    dataKey="bookings" 
+                    stroke="#667eea" 
+                    strokeWidth={3}
+                    dot={{ fill: '#667eea', strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, stroke: '#667eea', strokeWidth: 2 }}
+                    name="Bookings"
+                  />
+                  <Line 
+                    yAxisId="revenue"
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="#764ba2" 
+                    strokeWidth={3}
+                    dot={{ fill: '#764ba2', strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, stroke: '#764ba2', strokeWidth: 2 }}
+                    name="Revenue"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
@@ -185,14 +293,37 @@ const ReportDashboard: React.FC = () => {
             <div className="chart-header">
               <h3 className="chart-title">Facility Utilization</h3>
             </div>
-            <div className="mock-chart">
-              <div className="chart-placeholder">
-                <div className="chart-placeholder-icon">🏢</div>
-                <div className="chart-placeholder-text">Utilization by Facility</div>
-                <div style={{ fontSize: '0.8rem', marginTop: '0.5rem', opacity: 0.7 }}>
-                  (Pie chart showing facility usage distribution)
-                </div>
-              </div>
+            <div className="chart-container-inner">
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={facilityUtilization}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={(props: PieLabelRenderProps) => {
+                      const { name, percent } = props;
+                      return `${name} ${((percent as number) * 100).toFixed(0)}%`;
+                    }}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {facilityUtilization.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
+                    }}
+                    formatter={(value: any, name: any) => [`${value}%`, 'Utilization']}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
